@@ -1,332 +1,284 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UniNotes AI - Intelligent Note Generation</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
         
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        @font-face {
+            font-family: 'Geist';
+            src: url('https://assets.vercel.com/font/Geist/GeistVariableVF.woff2') format('woff2');
+            font-weight: 100 900;
+            font-display: swap;
+        }
         
+        @font-face {
+            font-family: 'Geist Mono';
+            src: url('https://assets.vercel.com/font/GeistMono/GeistMonoVariableVF.woff2') format('woff2');
+            font-weight: 100 900;
+            font-display: swap;
+        }
+
         :root {
-            --bg-primary: #020617;
-            --bg-secondary: #0f172a;
-            --bg-tertiary: #1e293b;
-            --bg-elevated: rgba(30, 41, 59, 0.6);
-            --accent-primary: #6366f1;
-            --accent-secondary: #8b5cf6;
-            --accent-cyan: #06b6d4;
-            --accent-pink: #ec4899;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --text-muted: #64748b;
-            --border: rgba(255, 255, 255, 0.08);
-            --border-hover: rgba(255, 255, 255, 0.15);
-            --shadow-glow: 0 0 40px rgba(99, 102, 241, 0.15);
+            --background: 0 0% 100%;
+            --foreground: 240 10% 3.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 240 10% 3.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 240 10% 3.9%;
+            --primary: 240 5.9% 10%;
+            --primary-foreground: 0 0% 98%;
+            --secondary: 240 4.8% 95.9%;
+            --secondary-foreground: 240 5.9% 10%;
+            --muted: 240 4.8% 95.9%;
+            --muted-foreground: 240 3.8% 46.1%;
+            --accent: 240 4.8% 95.9%;
+            --accent-foreground: 240 5.9% 10%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 0 0% 98%;
+            --border: 240 5.9% 90%;
+            --input: 240 5.9% 90%;
+            --ring: 240 5.9% 10%;
+            --radius: 0.75rem;
+            --chart-1: 12 76% 61%;
+            --chart-2: 173 58% 39%;
+            --chart-3: 197 37% 24%;
+            --chart-4: 43 74% 66%;
+            --chart-5: 27 87% 67%;
+        }
+
+        .dark {
+            --background: 240 10% 3.9%;
+            --foreground: 0 0% 98%;
+            --card: 240 10% 3.9%;
+            --card-foreground: 0 0% 98%;
+            --popover: 240 10% 3.9%;
+            --popover-foreground: 0 0% 98%;
+            --primary: 0 0% 98%;
+            --primary-foreground: 240 5.9% 10%;
+            --secondary: 240 3.7% 15.9%;
+            --secondary-foreground: 0 0% 98%;
+            --muted: 240 3.7% 15.9%;
+            --muted-foreground: 240 5% 64.9%;
+            --accent: 240 3.7% 15.9%;
+            --accent-foreground: 0 0% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 0 0% 98%;
+            --border: 240 3.7% 15.9%;
+            --input: 240 3.7% 15.9%;
+            --ring: 240 4.9% 83.9%;
+            --chart-1: 220 70% 50%;
+            --chart-2: 160 60% 45%;
+            --chart-3: 30 80% 55%;
+            --chart-4: 280 65% 60%;
+            --chart-5: 340 75% 55%;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            border-color: hsl(var(--border));
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
+            font-family: 'Geist', 'Inter', system-ui, sans-serif;
+            background: hsl(var(--background));
+            color: hsl(var(--foreground));
             min-height: 100vh;
-            line-height: 1.6;
-            overflow-x: hidden;
+            line-height: 1.5;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
-        .bg-mesh {
+        .font-mono {
+            font-family: 'Geist Mono', 'JetBrains Mono', ui-monospace, monospace;
+        }
+
+        /* Grain texture overlay */
+        .bg-grain {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            inset: 0;
             z-index: -1;
-            background: 
-                radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 100% 0%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 100% 100%, rgba(6, 182, 212, 0.08) 0%, transparent 40%),
-                radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.05) 0%, transparent 50%);
-            filter: blur(60px);
-            animation: meshMove 20s ease-in-out infinite;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            pointer-events: none;
         }
 
-        @keyframes meshMove {
+        /* Aurora gradient background */
+        .bg-aurora {
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            background: 
+                radial-gradient(circle at 0% 0%, hsl(var(--primary) / 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 100% 0%, hsl(var(--accent) / 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, hsl(var(--secondary) / 0.08) 0%, transparent 40%),
+                hsl(var(--background));
+            animation: aurora 20s ease-in-out infinite;
+        }
+
+        @keyframes aurora {
             0%, 100% { transform: translate(0, 0) scale(1); }
             33% { transform: translate(30px, -30px) scale(1.1); }
             66% { transform: translate(-20px, 20px) scale(0.9); }
         }
 
-        .navbar {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border);
-            z-index: 1000;
-            padding: 0;
-            transform: translateY(-100%);
-            animation: slideDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-            animation-delay: 0.2s;
-        }
-
-        @keyframes slideDown {
-            to { transform: translateY(0); }
-        }
-
-        .nav-content {
-            max-width: 1440px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
+        /* Shadcn UI Component Styles */
+        .btn {
+            display: inline-flex;
             align-items: center;
-            height: 72px;
+            justify-content: center;
+            gap: 0.5rem;
+            border-radius: calc(var(--radius) - 2px);
+            font-size: 0.875rem;
+            font-weight: 500;
+            line-height: 1.25rem;
+            height: 2.5rem;
+            padding: 0.5rem 1rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            outline: none;
+            border: 1px solid transparent;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+
+        .btn:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring));
+        }
+
+        .btn-default {
+            background: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+        }
+
+        .btn-default:hover {
+            background: hsl(var(--primary) / 0.9);
+        }
+
+        .btn-secondary {
+            background: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground));
+        }
+
+        .btn-secondary:hover {
+            background: hsl(var(--secondary) / 0.8);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border-color: hsl(var(--border));
+            color: hsl(var(--foreground));
+        }
+
+        .btn-outline:hover {
+            background: hsl(var(--accent));
+            color: hsl(var(--accent-foreground));
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: hsl(var(--foreground));
+        }
+
+        .btn-ghost:hover {
+            background: hsl(var(--accent));
+        }
+
+        .btn-sm {
+            height: 2.25rem;
+            padding: 0 0.75rem;
+            font-size: 0.8125rem;
+        }
+
+        .btn-lg {
+            height: 2.75rem;
             padding: 0 2rem;
         }
 
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-size: 1.5rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary), var(--accent-cyan));
-            background-size: 200% 200%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: gradientShift 5s ease infinite;
-            letter-spacing: -0.02em;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        .btn:disabled {
+            opacity: 0.5;
+            pointer-events: none;
         }
 
-        .brand:hover {
-            transform: scale(1.05);
+        /* Card */
+        .card {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
         }
 
-        @keyframes gradientShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
-
-        .brand-icon {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            -webkit-background-clip: unset;
-            -webkit-text-fill-color: white;
-            font-size: 1.25rem;
-            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
-            color: white;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .brand-icon::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
-            transform: rotate(45deg) translateY(-100%);
-            transition: transform 0.6s;
-        }
-
-        .brand:hover .brand-icon::before {
-            transform: rotate(45deg) translateY(100%);
-        }
-
-        .brand:hover .brand-icon {
-            transform: rotate(360deg) scale(1.1);
-            box-shadow: 0 0 30px rgba(99, 102, 241, 0.6);
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            align-items: center;
-        }
-
-        .nav-link {
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 0.875rem;
-            font-weight: 500;
-            transition: all 0.3s;
-            position: relative;
-            padding: 0.5rem 0;
-        }
-
-        .nav-link::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
-            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .nav-link:hover {
-            color: var(--text-primary);
+        .card-hover:hover {
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.15);
+            border-color: hsl(var(--muted-foreground) / 0.3);
             transform: translateY(-2px);
         }
 
-        .nav-link:hover::after {
+        .dark .card {
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .dark .card-hover:hover {
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+            border-color: hsl(var(--muted-foreground) / 0.2);
+        }
+
+        /* Input/Textarea */
+        .textarea-shadcn {
             width: 100%;
+            min-height: 100%;
+            background: transparent;
+            border: none;
+            color: hsl(var(--foreground));
+            font-family: 'Geist Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.7;
+            resize: none;
+            outline: none;
+            padding: 1.5rem;
         }
 
-        .container {
-            max-width: 1440px;
-            margin: 0 auto;
-            padding: 96px 2rem 2rem;
+        .textarea-shadcn::placeholder {
+            color: hsl(var(--muted-foreground));
         }
 
-        .upload-section {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 3rem 0;
-            text-align: center;
-            perspective: 1000px;
-        }
-
-        .hero-tag {
+        /* Badge */
+        .badge {
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
-            background: rgba(99, 102, 241, 0.1);
-            border: 1px solid rgba(99, 102, 241, 0.2);
-            color: var(--accent-light);
-            padding: 0.5rem 1rem;
             border-radius: 9999px;
-            font-size: 0.875rem;
+            border: 1px solid transparent;
+            padding: 0.125rem 0.625rem;
+            font-size: 0.75rem;
             font-weight: 600;
-            margin-bottom: 2rem;
-            backdrop-filter: blur(10px);
-            animation: fadeInUp 0.6s ease-out forwards;
-            opacity: 0;
-            transform: translateY(20px);
-            animation-delay: 0.3s;
+            transition: all 0.2s;
         }
 
-        @keyframes fadeInUp {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .badge-secondary {
+            background: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground));
+            border-color: hsl(var(--border));
         }
 
-        .title {
-            font-size: 4rem;
-            font-weight: 800;
-            margin-bottom: 1.5rem;
-            line-height: 1.1;
-            letter-spacing: -0.03em;
-            background: linear-gradient(180deg, var(--text-primary) 0%, var(--text-secondary) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: fadeInUp 0.6s ease-out forwards;
-            opacity: 0;
-            transform: translateY(20px);
-            animation-delay: 0.4s;
-        }
-
-        .gradient-text {
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-cyan), var(--accent-pink));
-            background-size: 200% 200%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: gradientShift 5s ease infinite;
-            position: relative;
-            display: inline-block;
-        }
-
-        .gradient-text::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: linear-gradient(90deg, var(--accent-primary), var(--accent-cyan), var(--accent-pink));
-            background-size: 200% 200%;
-            animation: gradientShift 3s ease infinite;
-            border-radius: 2px;
-            opacity: 0.8;
-        }
-
-        .subtitle {
-            font-size: 1.25rem;
-            color: var(--text-secondary);
-            margin-bottom: 3rem;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-            line-height: 1.7;
-            animation: fadeInUp 0.6s ease-out forwards;
-            opacity: 0;
-            transform: translateY(20px);
-            animation-delay: 0.5s;
-        }
-
-        .upload-card {
-            background: var(--bg-elevated);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 2.5rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            position: relative;
-            overflow: hidden;
-            animation: fadeInUp 0.6s ease-out forwards;
-            opacity: 0;
-            transform: translateY(20px) rotateX(10deg);
-            animation-delay: 0.6s;
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s;
-            transform-style: preserve-3d;
-        }
-
-        .upload-card:hover {
-            transform: translateY(-5px) rotateX(5deg);
-            box-shadow: 0 30px 60px -12px rgba(99, 102, 241, 0.2);
-        }
-
-        .upload-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-            animation: shimmer 3s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
-
+        /* Drop Zone */
         .drop-zone {
-            border: 2px dashed rgba(99, 102, 241, 0.3);
-            border-radius: 16px;
-            padding: 4rem 2rem;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            background: 
-                radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.05) 0%, transparent 70%);
+            border: 2px dashed hsl(var(--border));
+            border-radius: calc(var(--radius) - 2px);
+            background: hsl(var(--muted) / 0.3);
+            transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
         }
@@ -335,1520 +287,462 @@
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(6, 182, 212, 0.1));
+            background: linear-gradient(135deg, hsl(var(--primary) / 0.05), hsl(var(--secondary) / 0.05));
             opacity: 0;
-            transition: opacity 0.4s;
-        }
-
-        .drop-zone:hover::before {
-            opacity: 1;
+            transition: opacity 0.3s;
         }
 
         .drop-zone:hover, .drop-zone.dragover {
-            border-color: var(--accent-primary);
-            background: rgba(99, 102, 241, 0.08);
-            transform: translateY(-2px) scale(1.02);
-            box-shadow: var(--shadow-glow);
+            border-color: hsl(var(--primary));
+            background: hsl(var(--muted) / 0.5);
+            transform: scale(1.01);
+        }
+
+        .drop-zone:hover::before, .drop-zone.dragover::before {
+            opacity: 1;
         }
 
         .drop-zone.dragover {
-            border-color: var(--accent-cyan);
-            background: rgba(6, 182, 212, 0.08);
-            animation: borderPulse 1.5s infinite;
+            animation: border-pulse 2s infinite;
         }
 
-        @keyframes borderPulse {
-            0%, 100% { border-color: var(--accent-cyan); box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.4); }
-            50% { border-color: var(--accent-primary); box-shadow: 0 0 20px 5px rgba(99, 102, 241, 0.2); }
+        @keyframes border-pulse {
+            0%, 100% { border-color: hsl(var(--primary)); }
+            50% { border-color: hsl(var(--primary) / 0.5); }
         }
 
-        .upload-icon-wrapper {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 1.5rem;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
-            border-radius: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid rgba(99, 102, 241, 0.3);
-            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.2);
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
+        /* Animations */
+        .animate-in {
+            animation: animate-in 0.4s ease-out;
         }
 
-        .upload-icon-wrapper::after {
-            content: '';
-            position: absolute;
-            inset: -50%;
-            background: conic-gradient(transparent, var(--accent-primary), transparent 30%);
-            animation: rotate 3s linear infinite;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .drop-zone:hover .upload-icon-wrapper::after {
-            opacity: 0.3;
-        }
-
-        @keyframes rotate {
-            100% { transform: rotate(360deg); }
-        }
-
-        .drop-zone:hover .upload-icon-wrapper {
-            transform: scale(1.1) rotate(-5deg);
-            box-shadow: 0 0 40px rgba(99, 102, 241, 0.4);
-        }
-
-        .upload-icon {
-            font-size: 2rem;
-            color: var(--accent-primary);
-            transition: all 0.3s;
-            z-index: 1;
-            background: var(--bg-secondary);
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 23px;
-            margin: 1px;
-        }
-
-        .drop-zone:hover .upload-icon {
-            color: var(--accent-cyan);
-            transform: scale(1.1);
-        }
-
-        .upload-text h3 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            color: var(--text-primary);
-            transition: all 0.3s;
-        }
-
-        .drop-zone:hover .upload-text h3 {
-            transform: scale(1.05);
-            background: linear-gradient(135deg, var(--text-primary), var(--accent-primary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .upload-text p {
-            color: var(--text-secondary);
-            margin-bottom: 2rem;
-            transition: all 0.3s;
-        }
-
-        .drop-zone:hover .upload-text p {
-            color: var(--accent-light);
-        }
-
-        .format-badges {
-            display: flex;
-            justify-content: center;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-        }
-
-        .format-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
-            border-radius: 9999px;
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--text-secondary);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .format-badge::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .format-badge:hover {
-            background: rgba(99, 102, 241, 0.15);
-            border-color: rgba(99, 102, 241, 0.4);
-            color: var(--text-primary);
-            transform: translateY(-3px) scale(1.05);
-            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2);
-        }
-
-        .format-badge:hover::before {
-            left: 100%;
-        }
-
-        .loading-spinner {
-            width: 64px;
-            height: 64px;
-            margin: 0 auto 1rem;
-            position: relative;
-            animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-        }
-
-        .loading-spinner::before,
-        .loading-spinner::after {
-            content: '';
-            position: absolute;
-            border-radius: 50%;
-            border: 3px solid transparent;
-        }
-
-        .loading-spinner::before {
-            width: 100%;
-            height: 100%;
-            border-top-color: var(--accent-primary);
-            border-right-color: var(--accent-secondary);
-            animation: spin 1s linear infinite;
-        }
-
-        .loading-spinner::after {
-            width: 80%;
-            height: 80%;
-            top: 10%;
-            left: 10%;
-            border-bottom-color: var(--accent-cyan);
-            border-left-color: var(--accent-pink);
-            animation: spin 1.5s linear infinite reverse;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .workspace {
-            display: none;
-            opacity: 0;
-            transform: scale(0.95) translateY(20px);
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .workspace.active {
-            display: block;
-            opacity: 1;
-            transform: scale(1) translateY(0);
-            animation: workspaceEnter 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        @keyframes workspaceEnter {
-            from { 
-                opacity: 0; 
-                transform: scale(0.9) translateY(30px);
-                filter: blur(10px);
-            }
-            to { 
-                opacity: 1; 
-                transform: scale(1) translateY(0);
-                filter: blur(0);
-            }
-        }
-
-        .toolbar {
-            background: var(--bg-elevated);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 1rem 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            animation: slideUp 0.5s ease-out forwards;
-            opacity: 0;
-            transform: translateY(-20px);
-            animation-delay: 0.1s;
-        }
-
-        @keyframes slideUp {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .file-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .file-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            border: 1px solid rgba(99, 102, 241, 0.3);
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
-            color: var(--text-primary);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .file-icon:hover {
-            transform: scale(1.1) rotate(5deg);
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
-        }
-
-        .file-meta {
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-        }
-
-        .file-name {
-            font-weight: 700;
-            font-size: 1rem;
-            color: var(--text-primary);
-            transition: all 0.3s;
-        }
-
-        .file-stats {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-
-        .badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            transition: all 0.3s;
-        }
-
-        .badge-slides {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
-            color: #a78bfa;
-            border: 1px solid rgba(139, 92, 246, 0.3);
-        }
-
-        .badge-doc {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 182, 212, 0.2));
-            color: #34d399;
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-
-        .badge:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 15px currentColor;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 0.75rem;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 0.875rem;
-            cursor: pointer;
-            border: none;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-            transform: translateY(0);
-        }
-
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
-        }
-
-        .btn:active::before {
-            width: 300px;
-            height: 300px;
-        }
-
-        .btn:hover {
-            transform: translateY(-3px);
-        }
-
-        .btn:active {
-            transform: translateY(-1px);
-        }
-
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.05);
-            color: var(--text-primary);
-            border: 1px solid var(--border);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: var(--border-hover);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-            color: white;
-            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
-            position: relative;
-        }
-
-        .btn-primary::after {
-            content: '';
-            position: absolute;
-            inset: -2px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary), var(--accent-cyan));
-            z-index: -1;
-            opacity: 0;
-            transition: opacity 0.3s;
-            filter: blur(10px);
-        }
-
-        .btn-primary:hover:not(:disabled) {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 35px rgba(99, 102, 241, 0.4);
-        }
-
-        .btn-primary:hover::after {
-            opacity: 0.5;
-            animation: glowRotate 3s linear infinite;
-        }
-
-        @keyframes glowRotate {
-            0% { filter: blur(10px) hue-rotate(0deg); }
-            100% { filter: blur(10px) hue-rotate(360deg); }
-        }
-
-        .btn-primary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, #059669, #10b981);
-            color: white;
-            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
-        }
-
-        .btn-success:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 35px rgba(16, 185, 129, 0.4);
-        }
-
-        .workspace-grid {
-            display: grid;
-            grid-template-columns: 380px 1fr;
-            gap: 1.5rem;
-            height: calc(100vh - 220px);
-            min-height: 600px;
-        }
-
-        @media (max-width: 1200px) {
-            .workspace-grid { grid-template-columns: 320px 1fr; }
-        }
-
-        @media (max-width: 1024px) {
-            .workspace-grid { grid-template-columns: 1fr; height: auto; }
-        }
-
-        .panel {
-            background: var(--bg-elevated);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            animation: slideUp 0.5s ease-out forwards;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .panel:nth-child(1) { animation-delay: 0.2s; }
-        .panel:nth-child(2) { animation-delay: 0.3s; }
-
-        .panel:hover {
-            border-color: rgba(99, 102, 241, 0.2);
-            box-shadow: 0 30px 60px -12px rgba(99, 102, 241, 0.15);
-            transform: translateY(-2px);
-        }
-
-        .panel-header {
-            padding: 1.25rem 1.5rem;
-            border-bottom: 1px solid var(--border);
-            background: rgba(0, 0, 0, 0.2);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s;
-        }
-
-        .panel:hover .panel-header {
-            background: rgba(99, 102, 241, 0.05);
-        }
-
-        .panel-title {
-            font-weight: 700;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.625rem;
-            transition: all 0.3s;
-        }
-
-        .panel-title i {
-            color: var(--accent-primary);
-            transition: transform 0.3s;
-        }
-
-        .panel:hover .panel-title i {
-            transform: scale(1.2) rotate(10deg);
-        }
-
-        .panel-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .icon-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: rgba(255,255,255,0.05);
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            font-size: 0.875rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .icon-btn::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .icon-btn i {
-            position: relative;
-            z-index: 1;
-            transition: transform 0.3s;
-        }
-
-        .icon-btn:hover {
-            border-color: transparent;
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(99, 102, 241, 0.3);
-        }
-
-        .icon-btn:hover::before {
-            opacity: 1;
-        }
-
-        .icon-btn:hover i {
-            transform: scale(1.1);
-        }
-
-        .panel-content {
-            flex: 1;
-            overflow: auto;
-            padding: 1rem;
-        }
-
-        .panel-content::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-
-        .panel-content::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .panel-content::-webkit-scrollbar-thumb {
-            background: var(--bg-tertiary);
-            border-radius: 3px;
-        }
-
-        .panel-content::-webkit-scrollbar-thumb:hover {
-            background: var(--text-muted);
-        }
-
-        .slide-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .slide-item {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1rem 1.25rem;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-            animation: slideInLeft 0.4s ease-out forwards;
-            opacity: 0;
-            transform: translateX(-20px);
-        }
-
-        .slide-item:nth-child(1) { animation-delay: 0.1s; }
-        .slide-item:nth-child(2) { animation-delay: 0.15s; }
-        .slide-item:nth-child(3) { animation-delay: 0.2s; }
-        .slide-item:nth-child(4) { animation-delay: 0.25s; }
-        .slide-item:nth-child(5) { animation-delay: 0.3s; }
-        .slide-item:nth-child(6) { animation-delay: 0.35s; }
-        .slide-item:nth-child(7) { animation-delay: 0.4s; }
-        .slide-item:nth-child(8) { animation-delay: 0.45s; }
-
-        @keyframes slideInLeft {
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        .slide-item::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 3px;
-            background: linear-gradient(180deg, var(--accent-primary), var(--accent-secondary));
-            opacity: 0;
-            transition: opacity 0.3s;
-            transform: scaleY(0);
-            transform-origin: bottom;
-            transition: transform 0.4s, opacity 0.3s;
-        }
-
-        .slide-item:hover {
-            background: rgba(99, 102, 241, 0.08);
-            border-color: rgba(99, 102, 241, 0.2);
-            transform: translateX(8px);
-            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.1);
-        }
-
-        .slide-item:hover::before {
-            opacity: 1;
-            transform: scaleY(1);
-        }
-
-        .slide-item.active {
-            background: rgba(99, 102, 241, 0.12);
-            border-color: rgba(99, 102, 241, 0.4);
-            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.1);
-            transform: scale(1.02);
-        }
-
-        .slide-item.active::before {
-            opacity: 1;
-            transform: scaleY(1);
-        }
-
-        .slide-number {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 28px;
-            height: 28px;
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-            color: white;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            margin-right: 0.75rem;
-            box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
-            transition: all 0.3s;
-        }
-
-        .slide-item:hover .slide-number {
-            transform: scale(1.1) rotate(5deg);
-            box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
-        }
-
-        .slide-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 0.375rem;
-        }
-
-        .slide-title {
-            font-weight: 600;
-            font-size: 0.9375rem;
-            color: var(--text-primary);
-            transition: all 0.3s;
-        }
-
-        .slide-item:hover .slide-title {
-            color: var(--accent-light);
-            transform: translateX(5px);
-        }
-
-        .slide-preview {
-            font-size: 0.8125rem;
-            color: var(--text-secondary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            padding-left: 2.5rem;
-            transition: all 0.3s;
-        }
-
-        .slide-item:hover .slide-preview {
-            color: var(--text-muted);
-        }
-
-        .image-gallery {
-            margin-top: 1.5rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid var(--border);
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        .gallery-title {
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: var(--text-muted);
-            margin-bottom: 0.75rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.3s;
-        }
-
-        .image-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.625rem;
-        }
-
-        .image-card {
-            position: relative;
-            aspect-ratio: 16/10;
-            border-radius: 10px;
-            overflow: hidden;
-            cursor: pointer;
-            border: 1px solid var(--border);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            background: var(--bg-tertiary);
-            transform: translateY(0);
-        }
-
-        .image-card:hover {
-            transform: translateY(-5px) scale(1.05);
-            border-color: var(--accent-primary);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
-            z-index: 10;
-        }
-
-        .image-card img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .image-card:hover img {
-            transform: scale(1.15);
-        }
-
-        .image-overlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(180deg, transparent 0%, rgba(15, 23, 42, 0.95) 100%);
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            opacity: 0;
-            transition: all 0.3s;
-            padding: 0.5rem;
-            transform: translateY(10px);
-        }
-
-        .image-card:hover .image-overlay {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .overlay-text {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: white;
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-            transform: translateY(5px);
-            transition: transform 0.3s;
-        }
-
-        .image-card:hover .overlay-text {
-            transform: translateY(0);
-        }
-
-        .editor-panel {
-            position: relative;
-        }
-
-        .status-bar {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
-            padding: 0.875rem;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            gap: 1rem;
-            z-index: 10;
-            color: white;
-            font-weight: 600;
-            font-size: 0.875rem;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
-            animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .status-bar.active {
-            display: flex;
-        }
-
-        .typing-indicator {
-            display: flex;
-            gap: 4px;
-        }
-
-        .typing-indicator span {
-            width: 8px;
-            height: 8px;
-            background: white;
-            border-radius: 50%;
-            animation: typing 1.4s infinite ease-in-out;
-            box-shadow: 0 0 10px rgba(255,255,255,0.5);
-        }
-
-        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
-
-        @keyframes typing {
-            0%, 100% { transform: scale(0.8); opacity: 0.5; }
-            50% { transform: scale(1.2); opacity: 1; }
-        }
-
-        .editor-toolbar {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .mode-toggle {
-            display: flex;
-            background: rgba(0,0,0,0.3);
-            padding: 0.25rem;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            position: relative;
-        }
-
-        .mode-btn {
-            padding: 0.5rem 1.25rem;
-            border-radius: 8px;
-            border: none;
-            background: transparent;
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 0.875rem;
-            font-weight: 600;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            z-index: 1;
-        }
-
-        .mode-btn.active {
-            color: white;
-        }
-
-        .mode-toggle::before {
-            content: '';
-            position: absolute;
-            top: 0.25rem;
-            left: 0.25rem;
-            width: calc(50% - 0.25rem);
-            height: calc(100% - 0.5rem);
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .mode-toggle[data-mode="preview"]::before {
-            transform: translateX(100%);
-        }
-
-        .mode-btn:hover:not(.active) {
-            color: var(--text-primary);
-            transform: translateY(-1px);
-        }
-
-        .editor-container {
-            position: relative;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.2);
-            transition: all 0.3s;
-        }
-
-        .editor-container:focus-within {
-            box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.3);
-        }
-
-        .textarea {
-            width: 100%;
-            height: 100%;
-            background: transparent;
-            border: none;
-            color: var(--text-primary);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.9rem;
-            line-height: 1.7;
-            resize: none;
-            outline: none;
-            padding: 1.5rem;
-            tab-size: 2;
-            transition: all 0.3s;
-        }
-
-        .textarea::placeholder {
-            color: var(--text-muted);
-            transition: all 0.3s;
-        }
-
-        .textarea:focus::placeholder {
-            opacity: 0.5;
-            transform: translateX(10px);
-        }
-
-        .preview {
-            display: none;
-            height: 100%;
-            overflow: auto;
-            padding: 2rem;
-            color: var(--text-primary);
-            line-height: 1.8;
-        }
-
-        .preview.active {
-            display: block;
-            animation: fadeIn 0.4s ease-out;
-        }
-
-        @keyframes fadeIn {
+        @keyframes animate-in {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .preview h1 {
-            background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-size: 2.25rem;
-            font-weight: 800;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid var(--border);
-            letter-spacing: -0.02em;
-            animation: slideInLeft 0.5s ease-out;
+        .slide-in {
+            animation: slide-in 0.5s ease-out;
         }
 
-        .preview h2 {
-            color: var(--accent-light);
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-top: 2rem;
-            margin-bottom: 1rem;
+        @keyframes slide-in {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Toggle Switch */
+        .theme-toggle {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: hsl(var(--muted));
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: background 0.3s;
+            border: 1px solid hsl(var(--border));
+        }
+
+        .theme-toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 18px;
+            height: 18px;
+            background: hsl(var(--background));
+            border-radius: 50%;
+            transition: transform 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            transition: all 0.3s;
-            cursor: pointer;
+            justify-content: center;
         }
 
-        .preview h2:hover {
-            transform: translateX(10px);
-            color: var(--accent-primary);
+        .dark .theme-toggle::after {
+            transform: translateX(20px);
+            background: hsl(var(--foreground));
         }
 
-        .preview h3 {
-            color: var(--accent-secondary);
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: hsl(var(--muted));
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: hsl(var(--muted-foreground));
+        }
+
+        /* Preview markdown styles */
+        .preview-content h1 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: hsl(var(--foreground));
+            font-family: 'Geist', sans-serif;
+            letter-spacing: -0.02em;
+        }
+
+        .preview-content h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+            color: hsl(var(--foreground));
+            font-family: 'Geist', sans-serif;
+            letter-spacing: -0.01em;
+        }
+
+        .preview-content h3 {
             font-size: 1.25rem;
             font-weight: 600;
             margin-top: 1.5rem;
-            margin-bottom: 0.75rem;
-            transition: all 0.3s;
+            margin-bottom: 0.5rem;
+            color: hsl(var(--foreground));
         }
 
-        .preview h3:hover {
-            transform: translateX(5px);
-        }
-
-        .preview ul, .preview ol {
-            margin-left: 0;
-            margin-bottom: 1.25rem;
-            list-style: none;
-        }
-
-        .preview li {
-            margin-bottom: 0.75rem;
-            padding-left: 1.75rem;
-            position: relative;
-            transition: all 0.3s;
-        }
-
-        .preview li:hover {
-            transform: translateX(5px);
-            background: rgba(99, 102, 241, 0.05);
-            border-radius: 4px;
-            padding: 0.25rem 0.25rem 0.25rem 1.75rem;
-            margin-left: -0.25rem;
-        }
-
-        .preview li::before {
-            content: '›';
-            position: absolute;
-            left: 0;
-            color: var(--accent-primary);
-            font-weight: 700;
-            font-size: 1.25rem;
-            line-height: 1.25rem;
-            transition: all 0.3s;
-        }
-
-        .preview li:hover::before {
-            transform: rotate(90deg);
-            color: var(--accent-cyan);
-        }
-
-        .preview strong {
-            color: #c084fc;
+        .preview-content strong {
+            color: hsl(var(--primary));
             font-weight: 600;
-            background: linear-gradient(135deg, rgba(192, 132, 252, 0.15), rgba(192, 132, 252, 0.05));
-            padding: 0.125rem 0.5rem;
-            border-radius: 6px;
-            border: 1px solid rgba(192, 132, 252, 0.2);
-            transition: all 0.3s;
-            cursor: help;
+            background: hsl(var(--primary) / 0.1);
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
+            font-size: 0.95em;
         }
 
-        .preview strong:hover {
-            background: rgba(192, 132, 252, 0.25);
-            box-shadow: 0 0 10px rgba(192, 132, 252, 0.3);
+        .preview-content ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
         }
 
-        .preview hr {
+        .preview-content li {
+            margin-bottom: 0.5rem;
+            color: hsl(var(--foreground) / 0.9);
+        }
+
+        .preview-content blockquote {
+            border-left: 3px solid hsl(var(--primary));
+            padding-left: 1rem;
+            color: hsl(var(--muted-foreground));
+            font-style: italic;
+            margin: 1rem 0;
+        }
+
+        .preview-content hr {
             border: none;
-            border-top: 1px solid var(--border);
-            margin: 2.5rem 0;
-            position: relative;
+            border-top: 1px solid hsl(var(--border));
+            margin: 2rem 0;
         }
 
-        .preview hr::after {
-            content: '• • •';
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            background: var(--bg-tertiary);
-            padding: 0 1rem;
-            color: var(--text-muted);
-            letter-spacing: 0.5rem;
-            font-size: 0.75rem;
-            animation: pulse 2s infinite;
-        }
-
-        .panel-footer {
-            padding: 1rem 1.5rem;
-            border-top: 1px solid var(--border);
-            background: rgba(0, 0, 0, 0.2);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s;
-        }
-
-        .panel:hover .panel-footer {
-            background: rgba(99, 102, 241, 0.05);
-        }
-
-        .word-count {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.3s;
-        }
-
-        .word-count::before {
-            content: '';
-            width: 8px;
-            height: 8px;
-            background: var(--success);
-            border-radius: 50%;
-            box-shadow: 0 0 10px var(--success);
-            animation: pulse 2s infinite;
-        }
-
+        /* Toast */
         .toast {
             position: fixed;
-            top: 100px;
-            right: 2rem;
-            background: var(--bg-elevated);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
-            display: none;
+            top: 1rem;
+            right: 1rem;
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            padding: 1rem;
+            display: flex;
             align-items: center;
             gap: 0.75rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
             z-index: 9999;
-            animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: toast-in 0.3s ease-out;
             max-width: 400px;
-            transform-origin: top right;
         }
 
-        @keyframes slideInRight {
-            from { 
-                transform: translateX(100%) scale(0.8); 
-                opacity: 0; 
-            }
-            to { 
-                transform: translateX(0) scale(1); 
-                opacity: 1; 
-            }
+        @keyframes toast-in {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
 
         .toast.hiding {
-            animation: slideOutRight 0.3s ease-in forwards;
+            animation: toast-out 0.3s ease-in forwards;
         }
 
-        @keyframes slideOutRight {
-            to { 
-                transform: translateX(100%) scale(0.8); 
-                opacity: 0; 
-            }
+        @keyframes toast-out {
+            to { transform: translateX(100%); opacity: 0; }
         }
 
-        .toast.error {
-            border-left: 4px solid var(--danger);
-        }
-
-        .toast.success {
-            border-left: 4px solid var(--success);
-        }
-
-        .toast-icon {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            flex-shrink: 0;
-            animation: scaleIn 0.3s ease-out;
-        }
-
-        @keyframes scaleIn {
-            from { transform: scale(0); }
-            to { transform: scale(1); }
-        }
-
-        .toast.error .toast-icon {
-            background: rgba(239, 68, 68, 0.2);
-            color: var(--danger);
-        }
-
-        .toast.success .toast-icon {
-            background: rgba(16, 185, 129, 0.2);
-            color: var(--success);
-        }
-
-        .hidden { display: none !important; }
-
-        .editor-loading {
-            position: absolute;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 5;
-            flex-direction: column;
-            gap: 1rem;
-            animation: fadeIn 0.3s;
-        }
-
-        .editor-loading.active {
-            display: flex;
-        }
-
+        /* Progress bar */
         .progress-bar {
-            width: 200px;
+            width: 100%;
             height: 4px;
-            background: rgba(255,255,255,0.1);
+            background: hsl(var(--muted));
             border-radius: 2px;
             overflow: hidden;
-            position: relative;
         }
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
-            width: 0%;
-            transition: width 0.3s;
-            box-shadow: 0 0 10px var(--accent-primary);
-            position: relative;
-            overflow: hidden;
+            background: hsl(var(--primary));
+            transition: width 0.3s ease;
         }
 
-        .progress-fill::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            animation: shimmer 1.5s infinite;
+        /* Custom scrollbar for panels */
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
         }
 
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
-            margin-top: 3rem;
-            text-align: left;
-            perspective: 1000px;
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: hsl(var(--border));
+            border-radius: 3px;
         }
 
-        .feature-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 1.5rem;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            animation: fadeInUp 0.6s ease-out forwards;
-            opacity: 0;
-            transform: translateY(20px);
-            transform-style: preserve-3d;
-        }
-
-        .feature-card:nth-child(1) { animation-delay: 0.7s; }
-        .feature-card:nth-child(2) { animation-delay: 0.8s; }
-        .feature-card:nth-child(3) { animation-delay: 0.9s; }
-
-        .feature-card:hover {
-            background: rgba(99, 102, 241, 0.08);
-            border-color: rgba(99, 102, 241, 0.3);
-            transform: translateY(-8px) rotateX(5deg);
-            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.15);
-        }
-
-        .feature-icon {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 1rem;
-            font-size: 1.25rem;
-            color: var(--accent-primary);
-            transition: all 0.4s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .feature-card:hover .feature-icon {
-            transform: scale(1.1) rotate(-5deg);
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
-        }
-
-        .feature-icon::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, transparent, rgba(255,255,255,0.2), transparent);
-            transform: translateX(-100%);
-            transition: transform 0.6s;
-        }
-
-        .feature-card:hover .feature-icon::before {
-            transform: translateX(100%);
-        }
-
-        .feature-title {
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            color: var(--text-primary);
-            transition: all 0.3s;
-        }
-
-        .feature-card:hover .feature-title {
-            color: var(--accent-light);
-        }
-
-        .feature-desc {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            line-height: 1.5;
-            transition: all 0.3s;
-        }
-
-        .feature-card:hover .feature-desc {
-            color: var(--text-muted);
-        }
-
-        @media (max-width: 768px) {
-            .title { font-size: 2.5rem; }
-            .features-grid { grid-template-columns: 1fr; }
-            .toolbar { flex-direction: column; align-items: flex-start; gap: 1rem; }
-            .btn-group { width: 100%; justify-content: flex-end; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: hsl(var(--muted-foreground));
         }
     </style>
 </head>
-<body>
-    <div class="bg-mesh"></div>
+<body class="antialiased">
+    <div class="bg-aurora"></div>
+    <div class="bg-grain"></div>
 
-    <div class="toast" id="toast">
-        <div class="toast-icon"><i class="fas fa-exclamation"></i></div>
-        <span id="toastText">Error message</span>
+    <div id="toast" class="hidden toast">
+        <div id="toastIcon" class="flex-shrink-0"></div>
+        <div>
+            <h4 id="toastTitle" class="font-medium text-sm">Notification</h4>
+            <p id="toastMessage" class="text-sm text-muted-foreground text-[hsl(var(--muted-foreground))] mt-0.5"></p>
+        </div>
     </div>
 
-    <nav class="navbar">
-        <div class="nav-content">
-            <div class="brand">
-                <div class="brand-icon"><i class="fas fa-graduation-cap"></i></div>
-                UniNotes AI
-            </div>
-            <div class="nav-links">
-                <a href="#" class="nav-link">Help</a>
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 border-b border-[hsl(var(--border))] bg-[hsl(var(--background))]/80 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex h-16 items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] flex items-center justify-center font-bold text-lg shadow-lg">
+                        <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+                    </div>
+                    <span class="font-bold text-xl tracking-tight">UniNotes AI</span>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleTheme()" class="theme-toggle" aria-label="Toggle theme">
+                        <div class="absolute inset-0 flex items-center justify-between px-1.5 text-[10px] pointer-events-none">
+                            <i data-lucide="moon" class="w-3 h-3 text-[hsl(var(--muted-foreground))] dark:text-transparent"></i>
+                            <i data-lucide="sun" class="w-3 h-3 text-transparent dark:text-[hsl(var(--muted-foreground))]"></i>
+                        </div>
+                    </button>
+                    <button class="btn btn-ghost btn-sm">
+                        <i data-lucide="help-circle" class="w-4 h-4 mr-2"></i>
+                        Help
+                    </button>
+                </div>
             </div>
         </div>
     </nav>
 
-    <div class="container">
-        <div id="uploadSection" class="upload-section">
-            <div class="hero-tag">
-                <i class="fas fa-sparkles"></i>
-                <span>New: AI Image Analysis</span>
-            </div>
-            
-            <h1 class="title">
-                Transform Lectures into<br>
-                <span class="gradient-text">Structured Knowledge</span>
-            </h1>
-            
-            <p class="subtitle">
-                Upload your lecture slides and instantly generate comprehensive, 
-                exam-ready notes with key concepts, definitions, and visual aids.
-            </p>
-
-            <div class="upload-card">
-                <div id="dropZone" class="drop-zone">
-                    <input type="file" id="fileInput" accept=".pdf,.pptx,.docx" style="display: none;">
-                    
-                    <div class="upload-icon-wrapper">
-                        <i class="fas fa-cloud-arrow-up upload-icon"></i>
-                    </div>
-                    
-                    <div class="upload-text">
-                        <h3>Drop your lecture materials here</h3>
-                        <p>or click to browse your files</p>
-                    </div>
-                    
-                    <div class="format-badges">
-                        <span class="format-badge">
-                            <i class="fas fa-chart-bar"></i> PowerPoint
-                        </span>
-                        <span class="format-badge">
-                            <i class="fas fa-file-pdf"></i> PDF Documents
-                        </span>
-                        <span class="format-badge">
-                            <i class="fas fa-file-word"></i> Word
-                        </span>
-                    </div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
+        
+        <!-- Upload Section -->
+        <div id="uploadSection" class="max-w-3xl mx-auto animate-in">
+            <div class="text-center mb-10">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] text-xs font-semibold mb-6 border border-[hsl(var(--primary))]/20">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[hsl(var(--primary))] opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-[hsl(var(--primary))]"></span>
+                    </span>
+                    Now with real file parsing
                 </div>
+                
+                <h1 class="text-5xl md:text-6xl font-bold tracking-tight mb-4 text-[hsl(var(--foreground))]">
+                    Transform Lectures into<br>
+                    <span class="relative inline-block">
+                        <span class="relative z-10 bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--primary))]/50 bg-clip-text text-transparent">Structured Knowledge</span>
+                        <svg class="absolute -bottom-2 left-0 w-full h-3 text-[hsl(var(--primary))]/20 -z-0" viewBox="0 0 100 10" preserveAspectRatio="none">
+                            <path d="M0 5 Q 50 10 100 5" stroke="currentColor" stroke-width="8" fill="none" />
+                        </svg>
+                    </span>
+                </h1>
+                
+                <p class="text-lg text-[hsl(var(--muted-foreground))] max-w-2xl mx-auto leading-relaxed">
+                    Upload your lecture slides (PDF, PPTX, DOCX) and instantly extract content 
+                    to generate comprehensive, exam-ready notes using AI.
+                </p>
             </div>
 
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fas fa-robot"></i></div>
-                    <div class="feature-title">AI-Powered Extraction</div>
-                    <div class="feature-desc">Intelligent text analysis that identifies key concepts and relationships.</div>
+            <div class="card card-hover p-1">
+                <div class="p-6 md:p-8">
+                    <div id="dropZone" class="drop-zone p-10 md:p-16 cursor-pointer group">
+                        <input type="file" id="fileInput" accept=".pdf,.pptx,.docx" class="hidden">
+                        
+                        <div class="flex flex-col items-center text-center space-y-4">
+                            <div class="w-20 h-20 rounded-2xl bg-[hsl(var(--muted))] flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-inner">
+                                <i data-lucide="upload-cloud" class="w-10 h-10 text-[hsl(var(--muted-foreground))]"></i>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-xl font-semibold mb-1 text-[hsl(var(--foreground))]">Drop your files here</h3>
+                                <p class="text-sm text-[hsl(var(--muted-foreground))]">Supports PDF, PowerPoint, and Word documents up to 50MB</p>
+                            </div>
+                            
+                            <div class="flex flex-wrap items-center justify-center gap-2 pt-2">
+                                <span class="badge badge-secondary">
+                                    <i data-lucide="file-text" class="w-3 h-3 mr-1"></i> PDF
+                                </span>
+                                <span class="badge badge-secondary">
+                                    <i data-lucide="presentation" class="w-3 h-3 mr-1"></i> PPTX
+                                </span>
+                                <span class="badge badge-secondary">
+                                    <i data-lucide="file-type" class="w-3 h-3 mr-1"></i> DOCX
+                                </span>
+                            </div>
+                        </div>
+
+                        <div id="extractionLog" class="hidden mt-6 p-4 rounded-md bg-[hsl(var(--muted))] font-mono text-xs text-[hsl(var(--muted-foreground))] space-y-1 max-h-40 overflow-y-auto custom-scroll text-left border border-[hsl(var(--border))]"></div>
+                    </div>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fas fa-bullseye"></i></div>
-                    <div class="feature-title">Exam Preparation</div>
-                    <div class="feature-desc">Auto-generated practice questions and review checklists.</div>
+            </div>
+
+            <!-- Features -->
+            <div class="grid md:grid-cols-3 gap-4 mt-8">
+                <div class="card card-hover p-6 animate-in" style="animation-delay: 0.1s">
+                    <div class="w-10 h-10 rounded-xl bg-[hsl(var(--primary))]/10 flex items-center justify-center mb-4 text-[hsl(var(--primary))]">
+                        <i data-lucide="shield-check" class="w-5 h-5"></i>
+                    </div>
+                    <h3 class="font-semibold mb-1">Client-Side Only</h3>
+                    <p class="text-sm text-[hsl(var(--muted-foreground))]">Files processed locally in browser. No cloud uploads or data sharing.</p>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fas fa-images"></i></div>
-                    <div class="feature-title">Visual Analysis</div>
-                    <div class="feature-desc">Extracts and references diagrams, charts, and images from slides.</div>
+                
+                <div class="card card-hover p-6 animate-in" style="animation-delay: 0.2s">
+                    <div class="w-10 h-10 rounded-xl bg-[hsl(var(--primary))]/10 flex items-center justify-center mb-4 text-[hsl(var(--primary))]">
+                        <i data-lucide="brain" class="w-5 h-5"></i>
+                    </div>
+                    <h3 class="font-semibold mb-1">Smart Analysis</h3>
+                    <p class="text-sm text-[hsl(var(--muted-foreground))]">Intelligent extraction preserving hierarchy and identifying key terms.</p>
+                </div>
+                
+                <div class="card card-hover p-6 animate-in" style="animation-delay: 0.3s">
+                    <div class="w-10 h-10 rounded-xl bg-[hsl(var(--primary))]/10 flex items-center justify-center mb-4 text-[hsl(var(--primary))]">
+                        <i data-lucide="zap" class="w-5 h-5"></i>
+                    </div>
+                    <h3 class="font-semibold mb-1">Instant Export</h3>
+                    <p class="text-sm text-[hsl(var(--muted-foreground))]">Generate Markdown or PDF notes immediately after processing.</p>
                 </div>
             </div>
         </div>
 
-        <div id="workspace" class="workspace">
-            <div class="toolbar">
-                <div class="file-info">
-                    <div class="file-icon" id="fileIcon"><i class="fas fa-file"></i></div>
-                    <div class="file-meta">
-                        <div class="file-name" id="fileName">document.pptx</div>
-                        <div class="file-stats">
-                            <span id="contentStats">0 slides</span>
-                            <span id="fileBadge" class="badge badge-slides">Slides</span>
+        <!-- Workspace -->
+        <div id="workspace" class="hidden animate-in">
+            <!-- Toolbar -->
+            <div class="card p-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <div id="fileIcon" class="w-12 h-12 rounded-xl bg-[hsl(var(--muted))] flex items-center justify-center text-[hsl(var(--foreground))] shadow-sm">
+                        <i data-lucide="file" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 id="fileName" class="font-semibold text-[hsl(var(--foreground))]">document.pdf</h3>
+                        <div class="flex items-center gap-2 mt-0.5">
+                            <span id="contentStats" class="text-xs text-[hsl(var(--muted-foreground))]">0 pages</span>
+                            <span id="fileBadge" class="badge badge-secondary">PDF</span>
                         </div>
                     </div>
                 </div>
                 
-                <div class="btn-group">
-                    <button class="btn btn-secondary" onclick="resetApp()">
-                        <i class="fas fa-arrow-left"></i> New File
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <button onclick="resetApp()" class="btn btn-outline btn-sm flex-1 sm:flex-none">
+                        <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                        New
                     </button>
-                    <button class="btn btn-primary" id="generateBtn" onclick="generateNotes()">
-                        <i class="fas fa-wand-magic-sparkles"></i> Generate Notes
+                    <button onclick="generateNotes()" id="generateBtn" class="btn btn-default btn-sm flex-1 sm:flex-none shadow-lg shadow-[hsl(var(--primary))]/20">
+                        <i data-lucide="sparkles" class="w-4 h-4 mr-2"></i>
+                        Generate Notes
                     </button>
                 </div>
             </div>
 
-            <div class="workspace-grid">
-                <div class="panel">
-                    <div class="panel-header">
-                        <div class="panel-title">
-                            <i class="fas fa-bookmark"></i>
-                            <span id="slidesTitle">Slides</span>
-                            <span id="slideCountBadge" style="background: var(--bg-tertiary); color: var(--text-secondary); padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; margin-left: 0.5rem;">0</span>
+            <!-- Grid -->
+            <div class="grid lg:grid-cols-[380px_1fr] gap-6 h-[calc(100vh-280px)] min-h-[600px]">
+                
+                <!-- Left Panel: Slides -->
+                <div class="card flex flex-col overflow-hidden">
+                    <div class="p-4 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--card))]">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="bookmark" class="w-4 h-4 text-[hsl(var(--primary))]"></i>
+                            <span id="slidesTitle" class="font-semibold text-sm">Pages</span>
+                            <span id="slideCountBadge" class="badge badge-secondary text-[10px]">0</span>
                         </div>
-                        <div class="panel-actions">
-                            <button class="icon-btn" title="Collapse"><i class="fas fa-chevron-down"></i></button>
-                            <button class="icon-btn" title="Options"><i class="fas fa-ellipsis-vertical"></i></button>
-                        </div>
+                        <button onclick="togglePanel(this)" class="p-1.5 hover:bg-[hsl(var(--muted))] rounded-md transition-colors">
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-[hsl(var(--muted-foreground))]"></i>
+                        </button>
                     </div>
                     
-                    <div class="panel-content">
-                        <div id="slidesList" class="slide-list"></div>
-                        
-                        <div id="imageGallery" class="hidden image-gallery">
-                            <div class="gallery-title">
-                                <i class="fas fa-images"></i> Extracted Images
-                            </div>
-                            <div class="image-grid" id="imageGrid"></div>
-                        </div>
+                    <div class="flex-1 overflow-y-auto custom-scroll p-3 space-y-2" id="slidesList">
+                        <!-- Slide items injected here -->
                     </div>
                 </div>
 
-                <div class="panel editor-panel">
-                    <div id="statusBar" class="status-bar">
-                        <div class="typing-indicator">
-                            <span></span>
-                            <span></span>
-                            <span></span>
+                <!-- Right Panel: Editor -->
+                <div class="card flex flex-col overflow-hidden relative">
+                    <!-- Status Bar -->
+                    <div id="statusBar" class="absolute top-0 left-0 right-0 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-4 py-2 flex items-center justify-center gap-3 z-20 transform -translate-y-full transition-transform duration-300">
+                        <div class="flex gap-1">
+                            <span class="w-2 h-2 bg-current rounded-full animate-bounce"></span>
+                            <span class="w-2 h-2 bg-current rounded-full animate-bounce" style="animation-delay: 0.1s"></span>
+                            <span class="w-2 h-2 bg-current rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
                         </div>
-                        <span>Generating structured notes...</span>
+                        <span class="text-sm font-medium">Generating structured notes...</span>
                     </div>
 
-                    <div class="panel-header">
-                        <div class="panel-title">
-                            <i class="fas fa-pen-to-square" style="color: var(--accent-secondary);"></i>
-                            Generated Notes
+                    <!-- Loading Overlay -->
+                    <div id="editorLoading" class="hidden absolute inset-0 bg-[hsl(var(--background))]/95 backdrop-blur-sm z-30 flex flex-col items-center justify-center gap-4">
+                        <div class="w-10 h-10 border-2 border-[hsl(var(--border))] border-t-[hsl(var(--primary))] rounded-full animate-spin"></div>
+                        <div class="w-64 progress-bar">
+                            <div id="progressFill" class="progress-fill" style="width: 0%"></div>
                         </div>
-                        <div class="editor-toolbar">
-                            <div class="mode-toggle" id="modeToggle">
-                                <button class="mode-btn active" onclick="setMode('edit')" id="editBtn">Edit</button>
-                                <button class="mode-btn" onclick="setMode('preview')" id="previewBtn">Preview</button>
-                            </div>
-                            <button class="icon-btn" title="Copy" onclick="copyContent()"><i class="fas fa-copy"></i></button>
-                            <button class="icon-btn" title="Settings"><i class="fas fa-gear"></i></button>
-                        </div>
+                        <p class="text-sm text-[hsl(var(--muted-foreground))]">Processing content...</p>
                     </div>
 
-                    <div class="panel-content" style="padding: 0; position: relative;">
-                        <div class="editor-loading" id="editorLoading">
-                            <div class="loading-spinner" style="width: 40px; height: 40px;"></div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
-                            </div>
-                            <div style="color: var(--text-secondary); font-size: 0.875rem;">Processing content...</div>
+                    <div class="p-4 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--card))]">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="pen-tool" class="w-4 h-4 text-[hsl(var(--muted-foreground))]"></i>
+                            <span class="font-semibold text-sm">Generated Notes</span>
                         </div>
                         
-                        <div class="editor-container">
-                            <textarea id="notesEditor" class="textarea" placeholder="Click 'Generate Notes' to transform your slides into structured study materials..."></textarea>
-                            <div id="notesPreview" class="preview"></div>
+                        <div class="flex items-center gap-2">
+                            <div class="bg-[hsl(var(--muted))] p-1 rounded-lg flex items-center">
+                                <button onclick="setMode('edit')" id="editBtn" class="px-3 py-1.5 rounded-md text-xs font-medium transition-all bg-[hsl(var(--background))] shadow-sm">
+                                    Edit
+                                </button>
+                                <button onclick="setMode('preview')" id="previewBtn" class="px-3 py-1.5 rounded-md text-xs font-medium transition-all text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]">
+                                    Preview
+                                </button>
+                            </div>
+                            <button onclick="copyContent()" class="p-2 hover:bg-[hsl(var(--muted))] rounded-md transition-colors text-[hsl(var(--muted-foreground))]">
+                                <i data-lucide="copy" class="w-4 h-4"></i>
+                            </button>
                         </div>
                     </div>
 
-                    <div class="panel-footer">
-                        <span id="wordCount" class="word-count">0 words</span>
-                        <div class="btn-group">
-                            <button onclick="downloadMarkdown()" class="btn btn-secondary" style="padding: 0.625rem 1.25rem; font-size: 0.8125rem;">
-                                <i class="fas fa-download"></i> Markdown
+                    <div class="flex-1 overflow-hidden relative bg-[hsl(var(--muted))]/30">
+                        <textarea id="notesEditor" class="textarea-shadcn custom-scroll" placeholder="Click 'Generate Notes' to transform your content into structured study materials..."></textarea>
+                        <div id="notesPreview" class="hidden absolute inset-0 overflow-y-auto custom-scroll p-6 preview-content text-[hsl(var(--foreground))]"></div>
+                    </div>
+
+                    <div class="p-4 border-t border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--card))]">
+                        <span id="wordCount" class="text-xs text-[hsl(var(--muted-foreground))] flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                            0 words
+                        </span>
+                        <div class="flex items-center gap-2">
+                            <button onclick="downloadMarkdown()" class="btn btn-outline btn-sm">
+                                <i data-lucide="download" class="w-4 h-4 mr-2"></i>
+                                Markdown
                             </button>
-                            <button onclick="downloadPDF()" id="downloadBtn" class="btn btn-success" style="padding: 0.625rem 1.25rem; font-size: 0.8125rem;" disabled>
-                                <i class="fas fa-file-pdf"></i> Export PDF
+                            <button onclick="downloadPDF()" id="downloadBtn" class="btn btn-default btn-sm opacity-50 cursor-not-allowed" disabled>
+                                <i data-lucide="file-text" class="w-4 h-4 mr-2"></i>
+                                Export PDF
                             </button>
                         </div>
                     </div>
@@ -1858,15 +752,39 @@
     </div>
 
     <script>
-        let slidesData = [];
-        let currentImages = [];
-        let isGenerating = false;
-        let currentFileType = 'document';
+        // Initialize Lucide icons
+        lucide.createIcons();
 
+        let slidesData = [];
+        let currentFileType = 'document';
+        let originalFileName = '';
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // Theme Toggle
+        function toggleTheme() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+            lucide.createIcons();
+        }
+
+        // Load saved theme
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
+        // File Handling
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
-        const uploadSection = document.getElementById('uploadSection');
-        const workspace = document.getElementById('workspace');
+        const extractionLog = document.getElementById('extractionLog');
 
         dropZone.addEventListener('click', () => fileInput.click());
         dropZone.addEventListener('dragover', (e) => {
@@ -1885,352 +803,217 @@
             if (e.target.files.length) handleFile(e.target.files[0]);
         });
 
+        function logExtraction(message) {
+            extractionLog.classList.remove('hidden');
+            const div = document.createElement('div');
+            div.textContent = `> ${message}`;
+            div.className = 'opacity-0 animate-in';
+            extractionLog.appendChild(div);
+            extractionLog.scrollTop = extractionLog.scrollHeight;
+        }
+
         async function handleFile(file) {
-            const validTypes = [
-                'application/pdf',
-                'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-            ];
-            
-            if (!validTypes.includes(file.type)) {
-                showToast('Please upload PDF, PPTX, or DOCX files only.', 'error');
+            if (!['application/pdf', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(file.type)) {
+                showToast('Invalid file type', 'Please upload PDF, PPTX, or DOCX files only.', 'error');
                 return;
             }
 
-            dropZone.innerHTML = `
-                <div style="text-align: center; animation: fadeIn 0.3s;">
-                    <div class="loading-spinner"></div>
-                    <h3 style="color: var(--text-primary); margin-bottom: 0.5rem; font-size: 1.25rem;">Processing...</h3>
-                    <p style="color: var(--text-secondary); font-size: 0.875rem;">Analyzing ${file.name}</p>
-                </div>
-            `;
+            originalFileName = file.name;
+            logExtraction(`Loading ${file.name}...`);
 
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            try {
+                let content = [];
+                if (file.type === 'application/pdf') {
+                    content = await parsePDF(file);
+                    currentFileType = 'pdf';
+                } else if (file.type.includes('presentationml')) {
+                    content = await parsePPTX(file);
+                    currentFileType = 'slides';
+                } else {
+                    content = await parseDOCX(file);
+                    currentFileType = 'doc';
+                }
 
-            const mockData = generateMockData(file.name, file.type);
-            
-            slidesData = mockData.slides;
-            currentImages = mockData.images;
-            currentFileType = mockData.file_type;
-            
-            uploadSection.style.animation = 'slideUp 0.5s ease-in forwards';
-            setTimeout(() => {
-                uploadSection.style.display = 'none';
-                workspace.classList.add('active');
-            }, 400);
-            
-            document.getElementById('fileName').textContent = file.name;
-            updateFileAppearance(mockData.file_type, mockData.slide_count);
-            
-            renderSlidesList();
-            
-            if (currentImages.length > 0) {
-                renderImages();
+                if (content.length === 0) throw new Error('No text content found');
+
+                slidesData = content.map((text, idx) => ({
+                    number: idx + 1,
+                    title: extractTitle(text),
+                    content: text
+                }));
+
+                document.getElementById('uploadSection').classList.add('hidden');
+                document.getElementById('workspace').classList.remove('hidden');
+                
+                document.getElementById('fileName').textContent = file.name;
+                updateFileAppearance();
+                renderSlidesList();
+                
+                showToast('Success', `Extracted ${slidesData.length} sections from document`, 'success');
+                
+            } catch (error) {
+                showToast('Extraction Error', error.message, 'error');
+                logExtraction(`Error: ${error.message}`);
             }
         }
 
-        function generateMockData(filename, type) {
-            const isSlides = type.includes('presentation');
-            const isPDF = type.includes('pdf');
-            const count = isSlides ? 8 : (isPDF ? 5 : 6);
+        async function parsePDF(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            const slides = [];
+            
+            logExtraction(`PDF loaded: ${pdf.numPages} pages`);
+            
+            for (let i = 1; i <= pdf.numPages; i++) {
+                logExtraction(`Extracting page ${i}/${pdf.numPages}...`);
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                const text = textContent.items.map(item => item.str).join(' ');
+                if (text.trim()) slides.push(text);
+                document.getElementById('progressFill').style.width = `${(i/pdf.numPages)*100}%`;
+            }
+            return slides;
+        }
+
+        async function parsePPTX(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const zip = await JSZip.loadAsync(arrayBuffer);
+            const slideFiles = Object.keys(zip.files)
+                .filter(name => name.match(/ppt\/slides\/slide\d+\.xml/))
+                .sort((a, b) => parseInt(a.match(/\d+/)[0]) - parseInt(b.match(/\d+/)[0]));
+            
+            logExtraction(`PPTX loaded: ${slideFiles.length} slides`);
             
             const slides = [];
-            const images = [];
-            
-            const topics = [
-                'Introduction to Neural Networks',
-                'Backpropagation Algorithm',
-                'Convolutional Layers',
-                'Activation Functions',
-                'Training Methodologies',
-                'Overfitting and Regularization',
-                'Hyperparameter Tuning',
-                'Applications in Computer Vision',
-                'Recurrent Networks',
-                'Transfer Learning'
-            ];
-            
-            for (let i = 1; i <= count; i++) {
-                slides.push({
-                    number: i,
-                    title: topics[i-1] || `Section ${i}`,
-                    content: `Key concepts covering ${topics[i-1] || 'topic'} including theoretical foundations, practical implementations, and real-world applications. This section covers the fundamental principles and advanced techniques.`
-                });
-                
-                if (i % 2 === 0 && i < 6) {
-                    images.push({
-                        slide: i,
-                        src: `https://picsum.photos/seed/${i+100}/400/225`
-                    });
-                }
+            for (let i = 0; i < slideFiles.length; i++) {
+                logExtraction(`Extracting slide ${i + 1}...`);
+                const content = await zip.files[slideFiles[i]].async('text');
+                const text = extractTextFromXML(content);
+                if (text.trim()) slides.push(text);
+                document.getElementById('progressFill').style.width = `${((i+1)/slideFiles.length)*100}%`;
             }
-            
-            return {
-                success: true,
-                slides,
-                images,
-                file_type: isSlides ? 'slides' : (isPDF ? 'pdf' : 'doc'),
-                slide_count: count
-            };
+            return slides;
         }
 
-        function updateFileAppearance(type, count) {
-            const icon = document.getElementById('fileIcon');
-            const badge = document.getElementById('fileBadge');
-            const stats = document.getElementById('contentStats');
-            const slidesTitle = document.getElementById('slidesTitle');
-            const badgeCount = document.getElementById('slideCountBadge');
+        async function parseDOCX(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            logExtraction('DOCX loaded, extracting text...');
+            const result = await mammoth.extractRawText({ arrayBuffer });
+            const paragraphs = result.value.split(/\n\n+/).filter(p => p.trim());
+            logExtraction(`Extracted ${paragraphs.length} paragraphs`);
+            return paragraphs;
+        }
+
+        function extractTextFromXML(xmlString) {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
+            const textElements = xmlDoc.getElementsByTagName('a:t');
+            return Array.from(textElements).map(elem => elem.textContent).join(' ');
+        }
+
+        function extractTitle(text) {
+            const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+            const first = sentences[0].trim();
+            if (first.length < 100 && first.length > 5) return first.replace(/[.!?]$/, '');
+            return text.split(' ').slice(0, 6).join(' ') + '...';
+        }
+
+        function updateFileAppearance() {
+            const icons = {
+                slides: 'presentation',
+                pdf: 'file-text',
+                doc: 'file-type'
+            };
+            const labels = { slides: 'PowerPoint', pdf: 'PDF', doc: 'Word' };
+            const units = { slides: 'slides', pdf: 'pages', doc: 'sections' };
             
-            if (type === 'slides') {
-                icon.innerHTML = '<i class="fas fa-chart-bar"></i>';
-                badge.textContent = 'PowerPoint';
-                badge.className = 'badge badge-slides';
-                stats.textContent = `${count} slides`;
-                slidesTitle.textContent = 'Slides';
-            } else if (type === 'pdf') {
-                icon.innerHTML = '<i class="fas fa-file-pdf"></i>';
-                badge.textContent = 'PDF Document';
-                badge.className = 'badge badge-doc';
-                stats.textContent = `${count} pages`;
-                slidesTitle.textContent = 'Pages';
-            } else {
-                icon.innerHTML = '<i class="fas fa-file-word"></i>';
-                badge.textContent = 'Word Document';
-                badge.className = 'badge badge-doc';
-                stats.textContent = `${count} sections`;
-                slidesTitle.textContent = 'Sections';
-            }
+            document.getElementById('fileIcon').innerHTML = `<i data-lucide="${icons[currentFileType]}" class="w-6 h-6"></i>`;
+            document.getElementById('fileBadge').textContent = labels[currentFileType];
+            document.getElementById('contentStats').textContent = `${slidesData.length} ${units[currentFileType]}`;
+            document.getElementById('slidesTitle').textContent = currentFileType === 'slides' ? 'Slides' : (currentFileType === 'pdf' ? 'Pages' : 'Sections');
+            document.getElementById('slideCountBadge').textContent = slidesData.length;
             
-            badgeCount.textContent = count;
+            lucide.createIcons();
         }
 
         function renderSlidesList() {
             const container = document.getElementById('slidesList');
-            container.innerHTML = '';
-            
-            slidesData.forEach((slide, idx) => {
-                const div = document.createElement('div');
-                div.className = 'slide-item';
-                div.onclick = () => selectSlide(idx);
-                
-                const title = slide.title || `${currentFileType === 'slides' ? 'Slide' : 'Page'} ${slide.number}`;
-                const preview = slide.content.substring(0, 60) + (slide.content.length > 60 ? '...' : '');
-                
-                div.innerHTML = `
-                    <div class="slide-header">
-                        <span class="slide-number">${slide.number}</span>
-                        <span class="slide-title">${title}</span>
+            container.innerHTML = slidesData.map((slide, idx) => `
+                <div onclick="selectSlide(${idx})" class="slide-item cursor-pointer p-3 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted))] hover:border-[hsl(var(--primary))]/30 transition-all group ${idx === 0 ? 'bg-[hsl(var(--muted))]' : 'bg-[hsl(var(--card))]'}">
+                    <div class="flex items-start gap-3">
+                        <div class="w-7 h-7 rounded-md bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                            ${slide.number}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-medium text-sm text-[hsl(var(--foreground))] truncate mb-0.5">${slide.title}</h4>
+                            <p class="text-xs text-[hsl(var(--muted-foreground))] truncate">${slide.content.substring(0, 60)}...</p>
+                        </div>
                     </div>
-                    <div class="slide-preview">${preview || 'No text content'}</div>
-                `;
-                
-                container.appendChild(div);
-            });
-            
-            if (slidesData.length > 0) selectSlide(0);
-        }
-
-        function renderImages() {
-            document.getElementById('imageGallery').classList.remove('hidden');
-            const grid = document.getElementById('imageGrid');
-            grid.innerHTML = '';
-            
-            currentImages.forEach((img, idx) => {
-                const div = document.createElement('div');
-                div.className = 'image-card';
-                div.onclick = () => insertImage(idx);
-                div.innerHTML = `
-                    <img src="${img.src}" alt="Slide ${img.slide} image">
-                    <div class="image-overlay">
-                        <span class="overlay-text"><i class="fas fa-plus"></i> Insert</span>
-                    </div>
-                `;
-                grid.appendChild(div);
-            });
+                </div>
+            `).join('');
         }
 
         function selectSlide(index) {
             document.querySelectorAll('.slide-item').forEach((el, i) => {
-                el.classList.toggle('active', i === index);
-            });
-        }
-
-        function analyzeSlideContent(slide) {
-            const text = slide.content.toLowerCase();
-            const words = slide.content.match(/\b[A-Za-z]{4,}\b/g) || [];
-            
-            const originalWords = slide.content.match(/\b[A-Z][a-z]{2,}\b/g) || [];
-            const uniqueTerms = [...new Set(originalWords)].slice(0, 5);
-            
-            let type = 'content';
-            if (slide.number === 1 && (slide.title.toLowerCase().includes('title') || words.length < 20)) {
-                type = 'title';
-            } else if (slide.content.length < 100) {
-                type = 'summary';
-            }
-            
-            const bullets = slide.content
-                .split(/[.\n]/)
-                .map(s => s.trim())
-                .filter(s => s.length > 20 && s.length < 150)
-                .slice(0, 4);
-            
-            const definitions = [];
-            const defPatterns = [
-                /([A-Z][a-z]+(?:\s+[a-z]+){0,3})\s+(?:is|are|refers? to|means?|defined as)\s+([^.\n]+)/gi,
-                /([A-Z][a-zA-Z\s]{2,20})\s*:\s*([^.\n]+)/g
-            ];
-            
-            defPatterns.forEach(pattern => {
-                let match;
-                while ((match = pattern.exec(slide.content)) !== null) {
-                    definitions.push({
-                        term: match[1].trim(),
-                        def: match[2].trim()
-                    });
+                if (i === index) {
+                    el.classList.add('bg-[hsl(var(--muted))]', 'border-[hsl(var(--primary))]/30');
+                    el.classList.remove('bg-[hsl(var(--card))]');
+                } else {
+                    el.classList.remove('bg-[hsl(var(--muted))]', 'border-[hsl(var(--primary))]/30');
+                    el.classList.add('bg-[hsl(var(--card))]');
                 }
             });
-            
-            return {
-                type,
-                terms: uniqueTerms,
-                bullets: bullets.length > 0 ? bullets : [slide.content.substring(0, 120) + '...'],
-                definitions: definitions.slice(0, 2),
-                wordCount: words.length
-            };
         }
 
         async function generateNotes() {
-            if (isGenerating || slidesData.length === 0) return;
+            if (slidesData.length === 0) return;
             
-            isGenerating = true;
-            document.getElementById('generateBtn').disabled = true;
-            document.getElementById('statusBar').classList.add('active');
-            document.getElementById('editorLoading').classList.add('active');
+            const btn = document.getElementById('generateBtn');
+            btn.disabled = true;
+            document.getElementById('statusBar').style.transform = 'translateY(0)';
+            document.getElementById('editorLoading').classList.remove('hidden');
             
             const editor = document.getElementById('notesEditor');
-            editor.value = '';
-            
-            try {
-                let notes = '';
+            let notes = `# ${originalFileName}\n\n`;
+            notes += `> **Generated:** ${new Date().toLocaleDateString()} | **Source:** ${slidesData.length} sections\n\n---\n\n`;
+            notes += `## Contents\n\n`;
+            slidesData.forEach(s => notes += `${s.number}. ${s.title}\n`);
+            notes += `\n---\n\n`;
+
+            for (let i = 0; i < slidesData.length; i++) {
+                document.getElementById('progressFill').style.width = `${((i+1)/slidesData.length)*100}%`;
                 
-                notes += `# Class Notes: ${document.getElementById('fileName').textContent}\n\n`;
-                notes += `> **Generated:** ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}\n`;
-                notes += `> **Source:** ${slidesData.length} lecture ${currentFileType === 'slides' ? 'slides' : 'sections'}\n`;
-                notes += `> **AI Model:** UniNotes Pro v2.1\n\n`;
+                const slide = slidesData[i];
+                notes += `## ${slide.number}. ${slide.title}\n\n`;
                 
-                notes += `---\n\n`;
+                const sentences = slide.content.match(/[^.!?]+[.!?]+/g) || [slide.content];
+                const bullets = sentences.slice(0, 4).map(s => s.trim()).filter(s => s.length > 10);
                 
-                notes += `## Contents\n\n`;
-                slidesData.forEach(slide => {
-                    const title = slide.title || `Slide ${slide.number}`;
-                    notes += `${slide.number}. [${title}](#section-${slide.number})\n`;
-                });
-                notes += `\n---\n\n`;
-                
-                for (let i = 0; i < slidesData.length; i++) {
-                    const progress = ((i + 1) / slidesData.length) * 100;
-                    document.getElementById('progressFill').style.width = `${progress}%`;
-                    
-                    const slide = slidesData[i];
-                    const analysis = analyzeSlideContent(slide);
-                    
-                    notes += `<a name="section-${slide.number}"></a>\n`;
-                    notes += `## ${slide.number}. ${slide.title || 'Overview'}\n\n`;
-                    
-                    if (analysis.terms.length > 0) {
-                        notes += `**Key Terms:** ${analysis.terms.join(', ')}  \n`;
-                        notes += `*Estimated study time: ${Math.max(5, analysis.wordCount / 10)} minutes*\n\n`;
-                    }
-                    
-                    notes += `### Main Points\n\n`;
-                    analysis.bullets.forEach((bullet, idx) => {
-                        let formatted = bullet;
-                        analysis.terms.forEach(term => {
-                            const regex = new RegExp(`\\b${term}\\b`, 'g');
-                            formatted = formatted.replace(regex, `**${term}**`);
-                        });
-                        notes += `${idx + 1}. ${formatted}\n`;
-                    });
+                if (bullets.length) {
+                    notes += `### Key Points\n\n`;
+                    bullets.forEach((b, idx) => notes += `${idx+1}. ${b}\n`);
                     notes += `\n`;
-                    
-                    if (analysis.definitions.length > 0) {
-                        notes += `### Key Definitions\n\n`;
-                        analysis.definitions.forEach(def => {
-                            notes += `• **${def.term}**: ${def.def}\n`;
-                        });
-                        notes += `\n`;
-                    }
-                    
-                    if ((i + 1) % 3 === 0 && i < slidesData.length - 1) {
-                        notes += `---\n\n`;
-                    }
-                    
-                    if ((i + 1) % 2 === 0 || i === slidesData.length - 1) {
-                        editor.value = notes;
-                        editor.scrollTop = editor.scrollHeight;
-                        updateWordCount();
-                        await new Promise(r => setTimeout(r, 200));
-                    }
                 }
                 
                 notes += `---\n\n`;
-                notes += `## Chapter Summary\n\n`;
-                
-                const allTerms = [];
-                slidesData.forEach(slide => {
-                    const analysis = analyzeSlideContent(slide);
-                    allTerms.push(...analysis.terms);
-                });
-                
-                const uniqueTerms = [...new Set(allTerms)].slice(0, 10);
-                
-                notes += `This lecture module encompasses **${slidesData.length} ${currentFileType === 'slides' ? 'slides' : 'sections'}** covering foundational and advanced concepts including **${uniqueTerms.slice(0, 4).join(', ')}**, and **${uniqueTerms[4] || 'related methodologies'}**. \n\n`;
-                
-                notes += `Primary focus areas include:\n`;
-                notes += `• Understanding theoretical frameworks\n`;
-                notes += `• Practical implementation strategies\n`;
-                notes += `• Analysis of real-world applications\n`;
-                notes += `• Critical evaluation of methodologies\n\n`;
-                
-                notes += `## Exam Preparation Guide\n\n`;
-                
-                notes += `### High-Yield Concepts (Memorize These)\n`;
-                uniqueTerms.forEach((term, idx) => {
-                    notes += `${idx + 1}. **${term}** - Core concept appearing in 90% of assessments\n`;
-                });
-                
-                notes += `\n### Practice Questions\n\n`;
-                notes += `1. **Compare and Contrast:** Analyze the differences between ${uniqueTerms[0] || 'Theory A'} and ${uniqueTerms[1] || 'Theory B'} in practical applications.\n\n`;
-                notes += `2. **Application:** How would you implement ${uniqueTerms[2] || 'Method X'} to solve [specific problem scenario]?\n\n`;
-                notes += `3. **Analysis:** Evaluate the significance of ${uniqueTerms[3] || 'Concept Y'} within the broader context of the field.\n\n`;
-                notes += `4. **Synthesis:** Describe the relationship between ${slidesData[0]?.title || 'introduction'} and ${slidesData[slidesData.length-1]?.title || 'conclusion'}.\n\n`;
-                
-                notes += `### Master Checklist\n\n`;
-                notes += `- [ ] Complete review of all bold terminology\n`;
-                notes += `- [ ] Create flashcards for ${uniqueTerms.slice(0,3).join(', ')}\n`;
-                notes += `- [ ] Practice explaining concepts without reference materials\n`;
-                notes += `- [ ] Review extracted visual diagrams (see sidebar)\n`;
-                notes += `- [ ] Complete practice problems from textbook\n\n`;
-                
-                notes += `---\n*Generated with UniNotes AI Pro • Smart Study Technology*`;
-                
                 editor.value = notes;
-                updatePreview();
                 updateWordCount();
-                
-                document.getElementById('downloadBtn').disabled = false;
-                showToast('Notes generated successfully!', 'success');
-                
-            } catch (error) {
-                console.error('Generation error:', error);
-                showToast('Error generating notes: ' + error.message, 'error');
-            } finally {
-                isGenerating = false;
-                document.getElementById('generateBtn').disabled = false;
-                document.getElementById('statusBar').classList.remove('active');
-                document.getElementById('editorLoading').classList.remove('active');
+                await new Promise(r => setTimeout(r, 50));
             }
+
+            notes += `## Summary\n\nReview all ${slidesData.length} sections above. Focus on understanding the key concepts and definitions extracted from the source material.`;
+            
+            editor.value = notes;
+            updateWordCount();
+            document.getElementById('downloadBtn').disabled = false;
+            document.getElementById('downloadBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+            
+            setTimeout(() => {
+                document.getElementById('statusBar').style.transform = 'translateY(-100%)';
+                document.getElementById('editorLoading').classList.add('hidden');
+                btn.disabled = false;
+                lucide.createIcons();
+            }, 500);
         }
 
         function setMode(mode) {
@@ -2238,94 +1021,76 @@
             const previewBtn = document.getElementById('previewBtn');
             const editor = document.getElementById('notesEditor');
             const preview = document.getElementById('notesPreview');
-            const modeToggle = document.getElementById('modeToggle');
             
             if (mode === 'edit') {
-                editor.style.display = 'block';
-                preview.style.display = 'none';
-                editBtn.classList.add('active');
-                previewBtn.classList.remove('active');
-                modeToggle.removeAttribute('data-mode');
+                editor.classList.remove('hidden');
+                preview.classList.add('hidden');
+                editBtn.classList.add('bg-[hsl(var(--background))]', 'shadow-sm', 'text-[hsl(var(--foreground))]');
+                editBtn.classList.remove('text-[hsl(var(--muted-foreground))]');
+                previewBtn.classList.remove('bg-[hsl(var(--background))]', 'shadow-sm', 'text-[hsl(var(--foreground))]');
+                previewBtn.classList.add('text-[hsl(var(--muted-foreground))]');
             } else {
-                editor.style.display = 'none';
-                preview.style.display = 'block';
+                editor.classList.add('hidden');
+                preview.classList.remove('hidden');
                 updatePreview();
-                editBtn.classList.remove('active');
-                previewBtn.classList.add('active');
-                modeToggle.setAttribute('data-mode', 'preview');
+                previewBtn.classList.add('bg-[hsl(var(--background))]', 'shadow-sm', 'text-[hsl(var(--foreground))]');
+                previewBtn.classList.remove('text-[hsl(var(--muted-foreground))]');
+                editBtn.classList.remove('bg-[hsl(var(--background))]', 'shadow-sm', 'text-[hsl(var(--foreground))]');
+                editBtn.classList.add('text-[hsl(var(--muted-foreground))]');
             }
         }
 
         function updatePreview() {
             let md = document.getElementById('notesEditor').value;
-            
             md = md
                 .replace(/^# (.*$)/gm, '<h1>$1</h1>')
                 .replace(/^## (.*$)/gm, '<h2>$1</h2>')
                 .replace(/^### (.*$)/gm, '<h3>$1</h3>')
                 .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\[x\]/g, '<input type="checkbox" checked style="margin-right: 0.5rem; accent-color: var(--accent-primary);">')
-                .replace(/\[ \]/g, '<input type="checkbox" style="margin-right: 0.5rem; accent-color: var(--accent-primary);">')
-                .replace(/<a name="(.*?)"><\/a>/g, '')
+                .replace(/^> (.*$)/gm, '<blockquote>$1</blockquote>')
                 .replace(/---/g, '<hr>')
-                .replace(/^> (.*$)/gm, '<blockquote style="border-left: 3px solid var(--accent-primary); padding-left: 1rem; color: var(--text-secondary); margin: 1rem 0;">$1</blockquote>');
+                .replace(/^\d+\.(.*$)/gm, '<li>$1</li>');
             
-            let lines = md.split('\n');
+            const lines = md.split('\n');
             let inList = false;
-            let result = [];
+            let html = [];
             
             lines.forEach(line => {
-                if (line.match(/^\d+\./)) {
+                if (line.startsWith('<li>')) {
                     if (!inList) {
-                        result.push('<ol style="margin-left: 1.5rem; margin-bottom: 1rem;">');
+                        html.push('<ol>');
                         inList = true;
                     }
-                    result.push(line.replace(/^\d+\.(.*)/, '<li style="margin-bottom: 0.5rem;">$1</li>'));
+                    html.push(line);
                 } else {
                     if (inList) {
-                        result.push('</ol>');
+                        html.push('</ol>');
                         inList = false;
                     }
                     if (line.trim() && !line.startsWith('<')) {
-                        result.push('<p>' + line + '</p>');
+                        html.push(`<p>${line}</p>`);
                     } else {
-                        result.push(line);
+                        html.push(line);
                     }
                 }
             });
+            if (inList) html.push('</ol>');
             
-            if (inList) result.push('</ol>');
-            
-            md = result.join('');
-            
-            md = md.replace(/• (.*?)<\/p>/g, '<li>$1</li>');
-            md = md.replace(/<p>• /g, '<li>');
-            
-            document.getElementById('notesPreview').innerHTML = md;
+            document.getElementById('notesPreview').innerHTML = html.join('');
         }
 
         function updateWordCount() {
             const text = document.getElementById('notesEditor').value;
             const count = text.trim() ? text.trim().split(/\s+/).length : 0;
-            document.getElementById('wordCount').innerHTML = `<span></span>${count.toLocaleString()} words`;
-        }
-
-        function insertImage(idx) {
-            const img = currentImages[idx];
-            const markdown = `\n\n![Figure ${idx + 1} - Slide ${img.slide}](${img.src})\n*<small>Visual reference from slide ${img.slide}</small>*\n\n`;
-            
-            const editor = document.getElementById('notesEditor');
-            const pos = editor.selectionStart;
-            editor.value = editor.value.slice(0, pos) + markdown + editor.value.slice(pos);
-            updateWordCount();
-            showToast('Image inserted into notes', 'success');
+            document.getElementById('wordCount').innerHTML = `
+                <span class="w-1.5 h-1.5 rounded-full bg-green-500 ${count > 0 ? 'animate-pulse' : ''}"></span>
+                ${count.toLocaleString()} words
+            `;
         }
 
         function copyContent() {
             const content = document.getElementById('notesEditor').value;
-            navigator.clipboard.writeText(content).then(() => {
-                showToast('Content copied to clipboard', 'success');
-            });
+            navigator.clipboard.writeText(content).then(() => showToast('Copied', 'Content copied to clipboard', 'success'));
         }
 
         function downloadMarkdown() {
@@ -2334,228 +1099,111 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `UniNotes-${new Date().toISOString().split('T')[0]}.md`;
-            document.body.appendChild(a);
+            a.download = `notes-${new Date().toISOString().split('T')[0]}.md`;
             a.click();
-            document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            showToast('Markdown file downloaded', 'success');
+            showToast('Downloaded', 'Markdown file saved', 'success');
         }
 
         function downloadPDF() {
             const content = document.getElementById('notesEditor').value;
-            const title = document.getElementById('fileName').textContent;
-            
-            const pdfHTML = `
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
                 <!DOCTYPE html>
-                <html>
+                <html class="dark">
                 <head>
-                    <meta charset="UTF-8">
-                    <title>UniNotes - ${title}</title>
+                    <title>UniNotes - ${originalFileName}</title>
+                    <script src="https://cdn.tailwindcss.com"><\/script>
                     <style>
-                        @page { size: A4; margin: 20mm; }
-                        * { box-sizing: border-box; }
-                        body {
-                            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-                            line-height: 1.7;
-                            color: #1f2937;
-                            max-width: 210mm;
-                            margin: 0 auto;
-                            padding: 20px;
-                            font-size: 11pt;
-                            background: #ffffff;
-                        }
-                        h1 { 
-                            color: #1e3a8a;
-                            font-size: 26pt;
-                            font-weight: 800;
-                            margin-bottom: 1.5rem;
-                            padding-bottom: 1rem;
-                            border-bottom: 3px solid #6366f1;
-                            letter-spacing: -0.02em;
-                        }
-                        h2 { 
-                            color: #3730a3;
-                            font-size: 16pt;
-                            font-weight: 700;
-                            margin-top: 2rem;
-                            margin-bottom: 1rem;
-                            padding-bottom: 0.5rem;
-                            border-bottom: 1px solid #e5e7eb;
-                        }
-                        h3 { 
-                            color: #4f46e5;
-                            font-size: 13pt;
-                            font-weight: 600;
-                            margin-top: 1.5rem;
-                            margin-bottom: 0.75rem;
-                        }
-                        ol, ul { 
-                            margin-left: 0;
-                            padding-left: 1.5rem;
-                            margin-bottom: 1.25rem;
-                        }
-                        li { 
-                            margin-bottom: 0.5rem;
-                            text-align: justify;
-                        }
-                        strong { 
-                            color: #7c3aed;
-                            font-weight: 600;
-                            background: rgba(124, 58, 237, 0.08);
-                            padding: 0.125rem 0.375rem;
-                            border-radius: 4px;
-                        }
-                        hr {
-                            border: none;
-                            border-top: 1px solid #e5e7eb;
-                            margin: 2rem 0;
-                        }
-                        blockquote {
-                            border-left: 4px solid #6366f1;
-                            margin: 1.5rem 0;
-                            padding: 0.75rem 1.25rem;
-                            background: #f5f3ff;
-                            border-radius: 0 8px 8px 0;
-                        }
-                        .header-info {
-                            background: #f8fafc;
-                            padding: 1rem;
-                            border-radius: 8px;
-                            margin-bottom: 2rem;
-                            font-size: 9pt;
-                            color: #64748b;
-                            border: 1px solid #e2e8f0;
-                        }
-                        img {
-                            max-width: 100%;
-                            height: auto;
-                            margin: 1rem 0;
-                            border-radius: 8px;
-                            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                        }
-                        small {
-                            color: #6b7280;
-                            font-size: 9pt;
-                            display: block;
-                            margin-top: 0.25rem;
-                        }
-                        @media print {
-                            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                        }
+                        body { font-family: 'Inter', sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 20px; background: white; color: #111; }
+                        h1 { font-size: 24px; font-weight: 700; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+                        h2 { font-size: 18px; font-weight: 600; margin-top: 24px; color: #333; }
+                        h3 { font-size: 16px; font-weight: 600; margin-top: 16px; }
+                        ol { margin-left: 20px; }
+                        li { margin-bottom: 6px; }
+                        strong { color: #059669; }
+                        blockquote { border-left: 3px solid #333; padding-left: 12px; color: #666; font-style: italic; margin: 12px 0; }
                     </style>
                 </head>
                 <body>
-                    <div class="header-info">
-                        <strong>Source Document:</strong> ${title}<br>
-                        <strong>Generated on:</strong> ${new Date().toLocaleDateString()}<br>
-                        <strong>Platform:</strong> UniNotes AI Pro
-                    </div>
-                    ${convertMarkdownToPDFHTML(content)}
+                    ${content.replace(/^# (.*$)/gm, '<h1>$1</h1>')
+                            .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+                            .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                            .replace(/^> (.*$)/gm, '<blockquote>$1</blockquote>')
+                            .replace(/---/g, '<hr>')
+                            .replace(/^\d+\.(.*$)/gm, '<li>$1</li>')
+                            .replace(/\n\n/g, '</p><p>')}
                 </body>
                 </html>
-            `;
-            
-            function convertMarkdownToPDFHTML(md) {
-                return md
-                    .replace(/^# (.*$)/gm, '<h1>$1</h1>')
-                    .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-                    .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/<a name="(.*?)"><\/a>/g, '')
-                    .replace(/^> (.*$)/gm, '<blockquote>$1</blockquote>')
-                    .replace(/---/g, '<hr>')
-                    .replace(/!\[.*?\]\((.*?)\)/g, '<img src="$1">')
-                    .replace(/\*<small>(.*?)<\/small>\*/g, '<small>$1</small>')
-                    .replace(/• (.*$)/gm, '<li>$1</li>')
-                    .replace(/\n\n/g, '</p><p>')
-                    .replace(/<p><(h|ol|ul|blockquote)/g, '<$1')
-                    .replace(/<\/(h1|h2|h3|ol|ul|blockquote)><\/p>/g, '</$1>');
-            }
-            
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(pdfHTML);
-            printWindow.document.close();
-            
+            `);
             setTimeout(() => {
                 printWindow.focus();
                 printWindow.print();
-            }, 500);
-            
-            showToast('PDF ready for printing', 'success');
+            }, 250);
         }
 
-        let toastTimeout;
-        function showToast(message, type = 'error') {
+        function showToast(title, message, type = 'info') {
             const toast = document.getElementById('toast');
-            const text = document.getElementById('toastText');
-            const icon = toast.querySelector('.toast-icon');
+            const icon = document.getElementById('toastIcon');
+            const titleEl = document.getElementById('toastTitle');
+            const msgEl = document.getElementById('toastMessage');
             
-            clearTimeout(toastTimeout);
+            const colors = {
+                error: 'text-red-500',
+                success: 'text-green-500',
+                info: 'text-blue-500'
+            };
             
-            text.textContent = message;
-            toast.className = `toast ${type}`;
-            toast.style.display = 'flex';
+            const icons = {
+                error: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" x2="9" y1="9" y2="15"/><line x1="9" x2="15" y1="9" y2="15"/></svg>',
+                success: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>',
+                info: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>'
+            };
             
-            if (type === 'error') {
-                icon.innerHTML = '<i class="fas fa-exclamation"></i>';
-            } else {
-                icon.innerHTML = '<i class="fas fa-check"></i>';
-            }
+            icon.innerHTML = icons[type];
+            icon.className = colors[type];
+            titleEl.textContent = title;
+            msgEl.textContent = message;
             
-            toastTimeout = setTimeout(() => {
+            toast.classList.remove('hidden');
+            
+            setTimeout(() => {
                 toast.classList.add('hiding');
                 setTimeout(() => {
-                    toast.style.display = 'none';
+                    toast.classList.add('hidden');
                     toast.classList.remove('hiding');
                 }, 300);
             }, 4000);
         }
 
+        function togglePanel(btn) {
+            const panel = btn.closest('.card').querySelector('.overflow-y-auto');
+            const icon = btn.querySelector('svg');
+            if (panel.style.display === 'none') {
+                panel.style.display = 'block';
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                panel.style.display = 'none';
+                icon.style.transform = 'rotate(-90deg)';
+            }
+        }
+
         function resetApp() {
-            workspace.style.opacity = '0';
-            workspace.style.transform = 'scale(0.95) translateY(20px)';
-            
-            setTimeout(() => {
-                slidesData = [];
-                currentImages = [];
-                currentFileType = 'document';
-                document.getElementById('notesEditor').value = '';
-                updateWordCount();
-                fileInput.value = '';
-                workspace.classList.remove('active');
-                workspace.style.opacity = '';
-                workspace.style.transform = '';
-                uploadSection.style.display = 'block';
-                
-                dropZone.innerHTML = `
-                    <div class="upload-icon-wrapper">
-                        <i class="fas fa-cloud-arrow-up upload-icon"></i>
-                    </div>
-                    <div class="upload-text">
-                        <h3>Drop your lecture materials here</h3>
-                        <p>or click to browse your files</p>
-                    </div>
-                    <div class="format-badges">
-                        <span class="format-badge">
-                            <i class="fas fa-chart-bar"></i> PowerPoint
-                        </span>
-                        <span class="format-badge">
-                            <i class="fas fa-file-pdf"></i> PDF Documents
-                        </span>
-                        <span class="format-badge">
-                            <i class="fas fa-file-word"></i> Word
-                        </span>
-                    </div>
-                `;
-                
-                document.getElementById('downloadBtn').disabled = false;
-            }, 500);
+            document.getElementById('workspace').classList.add('hidden');
+            document.getElementById('uploadSection').classList.remove('hidden');
+            document.getElementById('notesEditor').value = '';
+            document.getElementById('extractionLog').innerHTML = '';
+            document.getElementById('extractionLog').classList.add('hidden');
+            document.getElementById('downloadBtn').disabled = true;
+            document.getElementById('downloadBtn').classList.add('opacity-50', 'cursor-not-allowed');
+            slidesData = [];
+            updateWordCount();
         }
 
         document.getElementById('notesEditor').addEventListener('input', () => {
             updateWordCount();
-            if (document.getElementById('notesPreview').style.display !== 'none') {
+            if (!document.getElementById('notesPreview').classList.contains('hidden')) {
                 updatePreview();
             }
         });
